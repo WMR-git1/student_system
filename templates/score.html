@@ -1,10 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layout.html" %}
+{% block title %}成绩 - 学生管理系统{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">{{ '全部成绩' if session.get('role') == '管理员' else '我的成绩' }}</h4>
+    <span class="badge bg-info text-dark fs-6">平均分 {{ avg }}</span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    {% if session.get('role') == '管理员' %}<th>学号</th>{% endif %}
+                    <th>课程名称</th>
+                    <th class="text-center">平时成绩</th>
+                    <th class="text-center">期末成绩</th>
+                    <th class="text-center">总评成绩</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in scores %}
+                <tr>
+                    {% if session.get('role') == '管理员' %}<td>{{ s.student_id }}</td>{% endif %}
+                    <td>{{ s.course_name }}</td>
+                    <td class="text-center">{{ s.regular_score }}</td>
+                    <td class="text-center">{{ s.final_score }}</td>
+                    <td class="text-center fw-bold">{{ s.total_score }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">暂无成绩记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="text-muted small mt-2 mb-0">总评成绩 = 平时成绩 × 30% + 期末成绩 × 70%</p>
+{% endblock %}

@@ -1,10 +1,178 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layout.html" %}
+{% block title %}个人档案 - 学生管理系统{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<h4 class="mb-3">个人档案</h4>
+
+{% if student %}
+<div class="row g-4">
+    {# 左：信息展示 #}
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header">学生基本信息</div>
+            <div class="card-body">
+                <table class="table table-bordered mb-0 align-middle">
+                    <tbody>
+                        <tr>
+                            <th class="table-light" style="width: 140px;">学号</th>
+                            <td>{{ student.student_id }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">姓名</th>
+                            <td>{{ student.name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">班级</th>
+                            <td>{{ student.class_name }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">专业</th>
+                            <td>{{ student.major }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">出生日期</th>
+                            <td>{{ student.birth_date.strftime('%Y-%m-%d') if student.birth_date else '暂无' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">入学年度</th>
+                            <td>{{ student.enrollment_year or '暂无' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">政治面貌</th>
+                            <td>{{ student.political_status or '暂无' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">宿舍号</th>
+                            <td>{{ student.dormitory or '暂无' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">联系方式</th>
+                            <td id="cellPhone">{{ student.phone or '未填写' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">邮箱</th>
+                            <td id="cellEmail">{{ student.email or '未填写' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">辅导员</th>
+                            <td>{{ student.counselor_name or '暂未分配' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">辅导员联系方式</th>
+                            <td>{{ student.counselor_phone or '暂无联系方式' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# 右：编辑表单 #}
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header">编辑个人信息</div>
+            <div class="card-body">
+                <form id="profileForm" method="post" action="{{ url_for('update_profile') }}" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label" for="phone">联系方式</label>
+                        <input type="text" id="phone" name="phone" class="form-control"
+                               value="{{ student.phone or '' }}" maxlength="30"
+                               placeholder="请输入手机号">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="email">邮箱</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               value="{{ student.email or '' }}" maxlength="100"
+                               placeholder="name@example.com">
+                        <div class="form-text">姓名、班级、专业由教务统一维护，有误请联系辅导员。</div>
+                    </div>
+                    <div id="formError" class="text-danger small mb-2 d-none"></div>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <span id="saveBtnText">保存修改</span>
+                        <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 保存成功提示（Bootstrap Toast） #}
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+    <div id="profileToast" class="toast align-items-center text-bg-success border-0" role="alert"
+         aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="profileToastText">修改成功</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var form = document.getElementById('profileForm');
+        var saveBtn = document.getElementById('saveBtn');
+        var saveText = document.getElementById('saveBtnText');
+        var spinner = document.getElementById('saveSpinner');
+        var errorBox = document.getElementById('formError');
+        var toastEl = document.getElementById('profileToast');
+
+        function setError(msg) {
+            if (!msg) {
+                errorBox.textContent = '';
+                errorBox.classList.add('d-none');
+                return;
+            }
+            errorBox.textContent = msg;
+            errorBox.classList.remove('d-none');
+        }
+
+        function setLoading(loading) {
+            saveBtn.disabled = loading;
+            spinner.classList.toggle('d-none', !loading);
+            saveText.textContent = loading ? '保存中…' : '保存修改';
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            setError('');
+            setLoading(true);
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    phone: document.getElementById('phone').value.trim(),
+                    email: document.getElementById('email').value.trim()
+                })
+            })
+                .then(function (resp) {
+                    return resp.json().then(function (data) {
+                        return { status: resp.status, data: data };
+                    });
+                })
+                .then(function (res) {
+                    setLoading(false);
+                    if (res.status === 200 && res.data.status === 'success') {
+                        /* 同步刷新左侧表格，不整页跳转 */
+                        document.getElementById('cellPhone').textContent = res.data.data.phone || '未填写';
+                        document.getElementById('cellEmail').textContent = res.data.data.email || '未填写';
+
+                        document.getElementById('profileToastText').textContent = res.data.message || '修改成功';
+                        bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 2500 }).show();
+                    } else {
+                        setError(res.data.message || '保存失败，请稍后重试');
+                    }
+                })
+                .catch(function () {
+                    setLoading(false);
+                    setError('网络异常，请稍后重试');
+                });
+        });
+    })();
+</script>
+
+{% else %}
+<div class="alert alert-warning">没有查询到你的档案信息，请联系辅导员。</div>
+{% endif %}
+{% endblock %}

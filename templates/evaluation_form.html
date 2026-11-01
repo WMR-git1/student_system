@@ -1,0 +1,203 @@
+{% extends "layout.html" %}
+{% block title %}教学评价 - {{ course_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .score-badge {
+        display: inline-block;
+        min-width: 52px;
+        padding: 2px 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        color: #2563eb;
+        background: #eff6ff;
+    }
+    .form-range::-webkit-slider-thumb { background: #2563eb; }
+    .form-range::-moz-range-thumb { background: #2563eb; }
+    .dim-item { padding: 14px 0; border-bottom: 1px dashed #e5e7eb; }
+    .dim-item:last-of-type { border-bottom: 0; }
+</style>
+
+<div class="mx-auto" style="max-width: 820px;">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold mb-1">教学评价 - 《{{ course_name }}》</h2>
+        <p class="text-muted mb-0">授课教师：{{ teacher }}</p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <input type="hidden" id="courseId" value="{{ course_id }}">
+
+            {% if record %}
+            <div class="alert alert-success py-2 small">
+                你已于 {{ record.create_time.strftime('%Y-%m-%d %H:%M') }} 完成评价，总评分
+                <strong>{{ record.total_score }}</strong> 分，内容不可修改。
+            </div>
+            {% endif %}
+
+            <div class="dim-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0 fw-semibold" for="quality">教学质量</label>
+                    <span class="score-badge" id="score-quality">{{ record.quality if record else 5 }}分</span>
+                </div>
+                <input type="range" min="1" max="5" step="1" class="form-range"
+                       id="quality" data-dim="quality"
+                       value="{{ record.quality if record else 5 }}" {% if record %}disabled{% endif %}>
+            </div>
+
+            <div class="dim-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0 fw-semibold" for="attitude">教学态度</label>
+                    <span class="score-badge" id="score-attitude">{{ record.attitude if record else 5 }}分</span>
+                </div>
+                <input type="range" min="1" max="5" step="1" class="form-range"
+                       id="attitude" data-dim="attitude"
+                       value="{{ record.attitude if record else 5 }}" {% if record %}disabled{% endif %}>
+            </div>
+
+            <div class="dim-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0 fw-semibold" for="process">教学过程</label>
+                    <span class="score-badge" id="score-process">{{ record.process if record else 5 }}分</span>
+                </div>
+                <input type="range" min="1" max="5" step="1" class="form-range"
+                       id="process" data-dim="process"
+                       value="{{ record.process if record else 5 }}" {% if record %}disabled{% endif %}>
+            </div>
+
+            <div class="dim-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0 fw-semibold" for="ability">教学能力</label>
+                    <span class="score-badge" id="score-ability">{{ record.ability if record else 5 }}分</span>
+                </div>
+                <input type="range" min="1" max="5" step="1" class="form-range"
+                       id="ability" data-dim="ability"
+                       value="{{ record.ability if record else 5 }}" {% if record %}disabled{% endif %}>
+            </div>
+
+            <div class="dim-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0 fw-semibold" for="effect">教学效果</label>
+                    <span class="score-badge" id="score-effect">{{ record.effect if record else 5 }}分</span>
+                </div>
+                <input type="range" min="1" max="5" step="1" class="form-range"
+                       id="effect" data-dim="effect"
+                       value="{{ record.effect if record else 5 }}" {% if record %}disabled{% endif %}>
+            </div>
+
+            <div class="mt-4">
+                <label class="form-label fw-semibold" for="comment">评语</label>
+                <textarea id="comment" class="form-control" rows="4" maxlength="1000"
+                          placeholder="请输入您对老师的意见或建议（选填）"
+                          {% if record %}readonly{% endif %}>{{ record.comment if record else '' }}</textarea>
+            </div>
+
+            <div id="errorBox" class="text-danger small mt-2 d-none"></div>
+
+            <div class="d-flex gap-2 mt-4">
+                {% if not record %}
+                <button type="button" class="btn btn-primary px-4" id="submitBtn">
+                    <span id="submitText">提交评价</span>
+                    <span class="spinner-border spinner-border-sm d-none" id="submitSpinner"></span>
+                </button>
+                {% endif %}
+                <button type="button" class="btn btn-secondary px-4" id="backBtn">返回列表</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var DIMS = ['quality', 'attitude', 'process', 'ability', 'effect'];
+        var isViewMode = {{ 'true' if record else 'false' }};
+        var courseId = document.getElementById('courseId').value;
+
+        var commentEl = document.getElementById('comment');
+        var errorBox = document.getElementById('errorBox');
+        var submitBtn = document.getElementById('submitBtn');
+        var submitText = document.getElementById('submitText');
+        var spinner = document.getElementById('submitSpinner');
+
+        /* 1. 滑块 oninput：实时更新旁边分数 */
+        DIMS.forEach(function (dim) {
+            var range = document.getElementById(dim);
+            var badge = document.getElementById('score-' + dim);
+
+            function sync() {
+                badge.textContent = range.value + '分';
+            }
+
+            range.addEventListener('input', sync);
+            sync();
+        });
+
+        /* 2. 返回列表 */
+        document.getElementById('backBtn').addEventListener('click', function () {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = "{{ url_for('evaluation') }}";
+            }
+        });
+
+        function showError(msg) {
+            if (!msg) {
+                errorBox.textContent = '';
+                errorBox.classList.add('d-none');
+                return;
+            }
+            errorBox.textContent = msg;
+            errorBox.classList.remove('d-none');
+        }
+
+        function setLoading(loading) {
+            submitBtn.disabled = loading;
+            spinner.classList.toggle('d-none', !loading);
+            submitText.textContent = loading ? '提交中…' : '提交评价';
+        }
+
+        /* 3. 提交评价 */
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function () {
+                showError('');
+                setLoading(true);
+
+                var payload = {
+                    course_id: Number(courseId),
+                    comment: commentEl.value.trim()
+                };
+                DIMS.forEach(function (dim) {
+                    payload[dim] = Number(document.getElementById(dim).value);
+                });
+
+                fetch("{{ url_for('api_submit_evaluation') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(function (resp) {
+                        return resp.json().then(function (data) {
+                            return { status: resp.status, data: data };
+                        });
+                    })
+                    .then(function (res) {
+                        setLoading(false);
+                        if (res.status === 200 && res.data.success) {
+                            alert('评价成功！');
+                            window.location.href = "{{ url_for('evaluation') }}";
+                        } else {
+                            showError(res.data.message || '提交失败，请稍后重试');
+                        }
+                    })
+                    .catch(function () {
+                        setLoading(false);
+                        showError('网络异常，请稍后重试');
+                    });
+            });
+        }
+    })();
+</script>
+{% endblock %}

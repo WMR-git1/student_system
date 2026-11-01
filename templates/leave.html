@@ -1,10 +1,114 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layout.html" %}
+{% block title %}请假 - 学生管理系统{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<h4 class="mb-3">请假申请</h4>
+
+<div class="row g-4">
+    {# 请假表单 #}
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header">填写请假单</div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('leave') }}">
+                    <div class="mb-3">
+                        <label class="form-label">请假类型</label>
+                        <select name="leave_type" class="form-select" required>
+                            <option value="">请选择</option>
+                            <option value="病假">病假</option>
+                            <option value="事假">事假</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">开始时间</label>
+                        <input type="datetime-local" name="start_time" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">结束时间</label>
+                        <input type="datetime-local" name="end_time" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">请假原因</label>
+                        <textarea name="reason" class="form-control" rows="3"
+                                  placeholder="请简要说明请假原因" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">提交申请</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# 请假记录 #}
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header">我的请假记录（{{ records|length }} 条）</div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>类型</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                            <th>原因</th>
+                            <th class="text-center">状态</th>
+                            <th class="text-center" style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td>{{ r.leave_type }}</td>
+                            <td>{{ r.start_time.strftime('%Y-%m-%d %H:%M') if r.start_time else '' }}</td>
+                            <td>{{ r.end_time.strftime('%Y-%m-%d %H:%M') if r.end_time else '' }}</td>
+                            <td>{{ r.reason }}</td>
+                            <td class="text-center">
+                                {% if r.status == '已通过' %}
+                                <span class="badge bg-success">已通过</span>
+                                {% elif r.status == '已驳回' %}
+                                <span class="badge bg-danger">已驳回</span>
+                                {% elif r.status == '已撤回' %}
+                                <span class="badge bg-secondary">已撤回</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">待审批</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if r.status == '待审批' %}
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="cancelLeave({{ r.id }})">撤回</button>
+                                {% else %}
+                                <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">暂无请假记录</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* 撤回请假：调用 /api/cancel_leave */
+    function cancelLeave(leaveId) {
+        if (!confirm('确定撤回这条请假申请吗？')) return;
+        fetch("{{ url_for('api_cancel_leave') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ leave_id: leaveId })
+        })
+        .then(function (resp) { return resp.json(); })
+        .then(function (data) {
+            alert(data.message);
+            if (data.success) location.reload();
+        })
+        .catch(function () { alert('网络异常，请稍后重试'); });
+    }
+</script>
+{% endblock %}

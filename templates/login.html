@@ -1,10 +1,571 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登录 · 学生管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #6366f1;
+            --brand-2: #06b6d4;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            color: #e2e8f0;
+            font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(900px 600px at 8% 0%, rgba(99, 102, 241, .35), transparent 60%),
+                radial-gradient(900px 700px at 100% 100%, rgba(6, 182, 212, .25), transparent 55%),
+                #070b14;
+            overflow-x: hidden;
+        }
+
+        /* ---------- 背景光斑 ---------- */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: .5;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .orb-1 { width: 520px; height: 520px; left: -160px; top: -180px; background: #4f46e5; animation: float1 16s ease-in-out infinite; }
+        .orb-2 { width: 460px; height: 460px; right: -140px; bottom: -160px; background: #0891b2; animation: float2 18s ease-in-out infinite; }
+        .orb-3 { width: 320px; height: 320px; left: 52%; top: 58%; background: #7c3aed; opacity: .32; animation: float1 22s ease-in-out infinite reverse; }
+        @keyframes float1 { 50% { transform: translate3d(40px, -30px, 0) scale(1.06); } }
+        @keyframes float2 { 50% { transform: translate3d(-36px, 26px, 0) scale(1.05); } }
+
+        /* ---------- 整体左右分栏 ---------- */
+        .login {
+            position: relative;
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .login-left {
+            flex: 1.1;
+            min-width: 0;
+            padding: 56px 64px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+        .login-right {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ---------- 左侧品牌与文案 ---------- */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: .5px;
+            color: #f8fafc;
+        }
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-size: 20px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            box-shadow: 0 10px 24px -8px rgba(99, 102, 241, .9);
+        }
+        .hero { max-width: 540px; }
+        .hero h1 {
+            margin: 0 0 18px;
+            font-size: clamp(32px, 3.4vw, 48px);
+            line-height: 1.2;
+            font-weight: 800;
+            letter-spacing: -.5px;
+        }
+        .grad {
+            background: linear-gradient(135deg, #818cf8, #22d3ee);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .hero-sub {
+            max-width: 440px;
+            margin: 0 0 34px;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #94a3b8;
+        }
+        .features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+        .features li { display: flex; gap: 14px; align-items: flex-start; }
+        .features i {
+            flex: 0 0 38px;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 17px;
+            color: #a5b4fc;
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+        .features strong { display: block; margin-bottom: 2px; font-size: 14px; color: #e2e8f0; }
+        .features span { font-size: 12.5px; color: #7c8aa0; }
+        .copyright { font-size: 12px; color: #475569; }
+
+        /* ---------- 右侧毛玻璃卡片 ---------- */
+        .glass {
+            width: 100%;
+            max-width: 410px;
+            padding: 40px 36px 32px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .14);
+            backdrop-filter: blur(24px) saturate(160%);
+            -webkit-backdrop-filter: blur(24px) saturate(160%);
+            box-shadow: 0 40px 80px -30px rgba(2, 6, 23, .9), inset 0 1px 0 rgba(255, 255, 255, .16);
+            animation: rise .7s cubic-bezier(.2, .8, .2, 1) both;
+        }
+        @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+        .glass-head { text-align: center; margin-bottom: 24px; }
+        .logo-badge {
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 14px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            font-size: 24px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            box-shadow: 0 18px 30px -12px rgba(99, 102, 241, .9);
+        }
+        .glass-head h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; color: #f8fafc; }
+        .glass-head p { margin: 0; font-size: 12.5px; color: #8fa0b6; }
+
+        /* ---------- 浮动标签输入框 ---------- */
+        .glass .form-floating > .form-control {
+            height: 56px;
+            padding: 1rem .95rem;
+            border-radius: 12px;
+            color: #f1f5f9;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .16);
+        }
+        .glass .form-floating > .form-control:focus {
+            color: #fff;
+            background: rgba(255, 255, 255, .08);
+            border-color: #818cf8;
+            box-shadow: 0 0 0 .2rem rgba(99, 102, 241, .22);
+        }
+        .glass .form-floating > label { padding: .9rem .95rem; color: #8b9bb4; }
+        .glass .form-floating > .form-control:focus ~ label,
+        .glass .form-floating > .form-control:not(:placeholder-shown) ~ label { color: #a5b4fc; }
+
+        .eye {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            z-index: 5;
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            transform: translateY(-50%);
+            border: 0;
+            border-radius: 9px;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, .06);
+        }
+        .eye:hover { color: #e2e8f0; background: rgba(255, 255, 255, .12); }
+
+        .remember { display: inline-flex; align-items: center; gap: 7px; margin: 0; font-size: 12.5px; color: #94a3b8; cursor: pointer; }
+        .remember input { width: 15px; height: 15px; margin: 0; accent-color: var(--brand); }
+        .text-dim { font-size: 12.5px; color: #64748b; }
+
+        .btn-login {
+            width: 100%;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: #fff;
+            background: linear-gradient(135deg, #6366f1 0%, #4f8ff7 50%, #06b6d4 100%);
+            box-shadow: 0 16px 30px -14px rgba(79, 70, 229, 1);
+            transition: transform .18s ease, box-shadow .18s ease;
+        }
+        .btn-login:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 22px 36px -14px rgba(79, 70, 229, 1); }
+        .btn-login:disabled { opacity: .75; cursor: not-allowed; }
+
+        .demo {
+            margin-top: 22px;
+            padding-top: 16px;
+            border-top: 1px dashed rgba(255, 255, 255, .12);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: #7b8aa0;
+        }
+        .demo i { margin-right: 4px; color: #64748b; }
+
+        /* ---------- 提示框 ---------- */
+        .glass .alert {
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #fecdd3;
+            background: rgba(244, 63, 94, .14);
+            border: 1px solid rgba(244, 63, 94, .3);
+        }
+        .glass .alert-success { color: #bbf7d0; background: rgba(34, 197, 94, .14); border-color: rgba(34, 197, 94, .3); }
+        .glass .alert-warning { color: #fde68a; background: rgba(245, 158, 11, .14); border-color: rgba(245, 158, 11, .3); }
+
+        /* ---------- 联系辅导员链接 ---------- */
+        .counselor-link {
+            margin-left: 2px;
+            color: #a5b4fc;
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(165, 180, 252, .5);
+        }
+        .counselor-link:hover { color: #c7d2fe; border-bottom-color: #c7d2fe; }
+
+        /* ---------- 联系辅导员弹窗（深色） ---------- */
+        #counselorModal .modal-content {
+            background: #1e1e2d;
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 18px;
+            color: #e2e8f0;
+            box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .9);
+        }
+        #counselorModal .modal-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+        }
+        #counselorModal .modal-title { font-size: 16px; font-weight: 600; color: #f8fafc; }
+        #counselorModal .modal-body { padding: 20px 22px 24px; }
+        #counselorModal .modal-tip { margin-bottom: 16px; font-size: 12.5px; color: #8fa0b6; }
+        #counselorModal .form-control {
+            height: 46px;
+            border-radius: 12px;
+            color: #f1f5f9;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .16);
+        }
+        #counselorModal .form-control:focus {
+            color: #fff;
+            background: rgba(255, 255, 255, .08);
+            border-color: #818cf8;
+            box-shadow: 0 0 0 .2rem rgba(99, 102, 241, .22);
+        }
+        #counselorModal .form-control::placeholder { color: #64748b; }
+        #counselorModal .btn-login { height: 46px; letter-spacing: 1px; }
+        #counselorModal .btn-outline-light { border-radius: 10px; }
+
+        .query-error {
+            margin-top: 12px;
+            font-size: 12.5px;
+            color: #f87171;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 11px 0;
+            font-size: 13.5px;
+            border-bottom: 1px dashed rgba(255, 255, 255, .1);
+        }
+        .result-row:last-of-type { border-bottom: 0; }
+        .result-row span { color: #8fa0b6; }
+        .result-row strong { color: #f1f5f9; font-weight: 600; text-align: right; word-break: break-all; }
+
+        /* ---------- 小屏适配 ---------- */
+        @media (max-width: 992px) {
+            .login { flex-direction: column; overflow: visible; }
+            .login-left { padding: 40px 32px 0; gap: 28px; }
+            .hero h1 { font-size: 30px; }
+            .hero-sub { margin-bottom: 0; }
+            .features, .copyright { display: none; }
+            .login-right { padding: 32px 24px 48px; }
+        }
+    </style>
 </head>
 <body>
+<div class="login">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 
+    <!-- 左：品牌宣传 -->
+    <section class="login-left">
+        <div class="brand">
+            <span class="brand-logo"><i class="bi bi-mortarboard-fill"></i></span>
+            <span>学生管理系统</span>
+        </div>
+
+        <div class="hero">
+            <h1>让学习管理<br><span class="grad">更简单一点</span></h1>
+            <p class="hero-sub">课表、成绩、选课、请假一站搞定，随时掌握你的校园生活。</p>
+            <ul class="features">
+                <li>
+                    <i class="bi bi-calendar3"></i>
+                    <div><strong>智能课表</strong><span>按周展示全部课程与上课地点</span></div>
+                </li>
+                <li>
+                    <i class="bi bi-bar-chart-line"></i>
+                    <div><strong>成绩分析</strong><span>平时、期末、总评一目了然</span></div>
+                </li>
+                <li>
+                    <i class="bi bi-send-check"></i>
+                    <div><strong>在线办事</strong><span>选课与请假全程线上完成</span></div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="copyright">© 2026 学生管理系统 · Flask + Bootstrap 5</div>
+    </section>
+
+    <!-- 右：毛玻璃登录卡片 -->
+    <section class="login-right">
+        <div class="glass">
+            <div class="glass-head">
+                <div class="logo-badge"><i class="bi bi-shield-lock"></i></div>
+                <h2>欢迎回来</h2>
+                <p>请使用学号或管理员账号登录</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            <form method="post" action="{{ url_for('login') }}" autocomplete="off">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="username" name="username"
+                           placeholder=" " required autofocus>
+                    <label for="username">账号 / 学号</label>
+                </div>
+
+                <div class="form-floating mb-3 position-relative">
+                    <input type="password" class="form-control pe-5" id="password" name="password"
+                           placeholder=" " required>
+                    <label for="password">密码</label>
+                    <button type="button" class="eye" id="eye" tabindex="-1" aria-label="显示密码">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <label class="remember"><input type="checkbox" id="remember"> <span>记住账号</span></label>
+                    <span class="text-dim">忘记密码？<a href="javascript:void(0)" class="counselor-link"
+                            data-bs-toggle="modal" data-bs-target="#counselorModal">联系辅导员</a></span>
+                </div>
+
+                <button class="btn-login" type="submit" id="submitBtn">
+                    <span id="btnText">登 录</span>
+                    <span class="spinner-border spinner-border-sm d-none" id="spinner"></span>
+                </button>
+            </form>
+
+            <div class="demo">
+                <div><i class="bi bi-person"></i> 学生账号：2023001 / 123456</div>
+                <div><i class="bi bi-person-gear"></i> 管理员账号：admin / 123456</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    (function () {
+        /* 1. 密码显示 / 隐藏 */
+        var pwd = document.getElementById('password');
+        var eye = document.getElementById('eye');
+        eye.addEventListener('click', function () {
+            var show = pwd.type === 'password';
+            pwd.type = show ? 'text' : 'password';
+            eye.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
+            pwd.focus();
+        });
+
+        /* 2. 记住账号（只记账号，不记密码） */
+        var username = document.getElementById('username');
+        var remember = document.getElementById('remember');
+        var saved = localStorage.getItem('login_username');
+        if (saved) {
+            username.value = saved;
+            remember.checked = true;
+            pwd.focus();
+        }
+
+        /* 3. 提交时按钮进入加载状态，防止重复点击 */
+        document.querySelector('form').addEventListener('submit', function () {
+            if (username.value.trim()) {
+                localStorage.setItem('login_username', username.value.trim());
+            }
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('spinner').classList.remove('d-none');
+        });
+    })();
+</script>
+
+<!-- ========== 联系辅导员弹窗 ========== -->
+<div class="modal fade" id="counselorModal" tabindex="-1" aria-labelledby="counselorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="counselorModalLabel">
+                    <i class="bi bi-person-lines-fill me-2"></i>联系辅导员
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-tip">输入你的学号，即可查询所在班级辅导员的联系方式。</p>
+
+                <!-- 查询区 -->
+                <div id="counselorQuery">
+                    <div class="mb-3">
+                        <input type="text" id="queryStudentId" class="form-control bg-dark text-white"
+                               placeholder="请输入您的学号" autocomplete="off">
+                    </div>
+                    <button type="button" class="btn btn-login w-100" id="queryBtn">
+                        <span id="queryBtnText">查 询</span>
+                        <span class="spinner-border spinner-border-sm d-none" id="querySpinner"></span>
+                    </button>
+                    <div id="queryError" class="query-error d-none"></div>
+                </div>
+
+                <!-- 结果区（初始隐藏） -->
+                <div id="counselorResult" style="display: none;">
+                    <div class="result-row">
+                        <span>辅导员姓名</span><strong id="counselorName"></strong>
+                    </div>
+                    <div class="result-row">
+                        <span>联系电话</span><strong id="counselorPhone"></strong>
+                    </div>
+                    <div class="result-row">
+                        <span>电子邮箱</span><strong id="counselorEmail"></strong>
+                    </div>
+                    <button type="button" class="btn btn-outline-light btn-sm mt-3" id="queryAgainBtn">
+                        查询其他学号
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        var modalEl = document.getElementById('counselorModal');
+        var queryBox = document.getElementById('counselorQuery');
+        var resultBox = document.getElementById('counselorResult');
+        var input = document.getElementById('queryStudentId');
+        var btn = document.getElementById('queryBtn');
+        var btnText = document.getElementById('queryBtnText');
+        var spinner = document.getElementById('querySpinner');
+        var errorBox = document.getElementById('queryError');
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.classList.remove('d-none');
+        }
+
+        function clearError() {
+            errorBox.textContent = '';
+            errorBox.classList.add('d-none');
+        }
+
+        function setLoading(loading) {
+            btn.disabled = loading;
+            spinner.classList.toggle('d-none', !loading);
+            btnText.textContent = loading ? '查询中…' : '查 询';
+        }
+
+        /* 关闭弹窗时回到初始状态 */
+        function reset() {
+            queryBox.style.display = '';
+            resultBox.style.display = 'none';
+            input.value = '';
+            clearError();
+            setLoading(false);
+        }
+
+        modalEl.addEventListener('hidden.bs.modal', reset);
+
+        function query() {
+            var studentId = input.value.trim();
+            clearError();
+
+            if (!studentId) {
+                showError('请输入学号');
+                input.focus();
+                return;
+            }
+
+            setLoading(true);
+
+            fetch("{{ url_for('api_get_counselor') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_id: studentId })
+            })
+                .then(function (resp) {
+                    return resp.json().then(function (data) {
+                        return { status: resp.status, data: data };
+                    });
+                })
+                .then(function (res) {
+                    setLoading(false);
+                    if (res.status === 200 && res.data.success) {
+                        document.getElementById('counselorName').textContent = res.data.name || '—';
+                        document.getElementById('counselorPhone').textContent = res.data.phone || '—';
+                        document.getElementById('counselorEmail').textContent = res.data.email || '—';
+                        queryBox.style.display = 'none';
+                        resultBox.style.display = '';
+                    } else {
+                        showError(res.data.message || '查询失败，请稍后重试');
+                    }
+                })
+                .catch(function () {
+                    setLoading(false);
+                    showError('网络异常，请稍后重试');
+                });
+        }
+
+        btn.addEventListener('click', query);
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                query();
+            }
+        });
+        document.getElementById('queryAgainBtn').addEventListener('click', reset);
+    })();
+</script>
 </body>
 </html>

@@ -1,10 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layout.html" %}
+{% block title %}选课 - 学生管理系统{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<h4 class="mb-3">选课</h4>
+
+{# 已选课程 #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header">我的已选课程（{{ my_courses|length }} 门）</div>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>课程名称</th>
+                    <th>教师</th>
+                    <th class="text-center">学分</th>
+                    <th>上课时间</th>
+                    <th>上课地点</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in my_courses %}
+                <tr>
+                    <td>{{ c.course_name }}</td>
+                    <td>{{ c.teacher }}</td>
+                    <td class="text-center">{{ c.credit }}</td>
+                    <td>{{ c.time_slot }}</td>
+                    <td>{{ c.location }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">还没有选课，去下面挑一门吧</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# 可选课程 #}
+<div class="card shadow-sm">
+    <div class="card-header">可选课程（{{ courses|length }} 门）</div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>课程名称</th>
+                    <th>教师</th>
+                    <th class="text-center">学分</th>
+                    <th>上课时间</th>
+                    <th>上课地点</th>
+                    <th class="text-center">已选 / 上限</th>
+                    <th class="text-center" style="width: 120px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in courses %}
+                <tr>
+                    <td>{{ c.course_name }}</td>
+                    <td>{{ c.teacher }}</td>
+                    <td class="text-center">{{ c.credit }}</td>
+                    <td>{{ c.time_slot }}</td>
+                    <td>{{ c.location }}</td>
+                    <td class="text-center">
+                        {% if c.selected_count >= c.max_count %}
+                        <span class="text-danger">{{ c.selected_count }} / {{ c.max_count }}（已满）</span>
+                        {% else %}
+                        <span class="text-success">{{ c.selected_count }} / {{ c.max_count }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if c.id in selected_ids %}
+                        <span class="badge bg-secondary">已选</span>
+                        {% else %}
+                        <form method="post" action="{{ url_for('selection') }}" class="d-inline">
+                            <input type="hidden" name="course_id" value="{{ c.id }}">
+                            <button type="submit" class="btn btn-sm btn-primary"
+                                    {% if c.selected_count >= c.max_count %}disabled{% endif %}>选课</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-3">暂无课程</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

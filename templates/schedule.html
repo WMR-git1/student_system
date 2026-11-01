@@ -1,10 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layout.html" %}
+{% block title %}课表 - 学生管理系统{% endblock %}
 
-</body>
-</html>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">本周课表</h4>
+    <span class="text-muted small">共 {{ courses|length }} 门课程</span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-bordered text-center align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 110px;">时间</th>
+                    {% for day in days %}
+                    <th>{{ day }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for slot in slots %}
+                <tr>
+                    <th class="table-light">{{ slot }}</th>
+                    {% for day in days %}
+                    {% set cell = grid.get(day ~ '|' ~ slot) %}
+                    <td style="height: 92px;">
+                        {% if cell %}
+                        {% for course in cell %}
+                        <div class="mb-1">
+                            <div class="fw-bold">{{ course.course_name }}</div>
+                            <div class="small text-muted">{{ course.teacher }}</div>
+                            <div class="small text-muted">{{ course.location }}</div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="text-muted small mt-2 mb-0">同一时段有多门课程时，会显示在同一格里。</p>
+{% endblock %}

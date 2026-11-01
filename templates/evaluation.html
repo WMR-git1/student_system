@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+{% block title %}教学评价 - 学生管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">我的教学评价</h4>
+    <span class="text-muted small">共 {{ courses|length }} 门课程</span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">我的教学评价</div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>课程名称</th>
+                    <th>授课教师</th>
+                    <th class="text-center" style="width: 140px;">评价状态</th>
+                    <th class="text-center" style="width: 120px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in courses %}
+                <tr>
+                    <td>{{ c.course_name }}</td>
+                    <td>{{ c.teacher }}</td>
+                    <td class="text-center">
+                        {% if c.eval_id %}
+                        <span class="badge bg-success">已评价</span>
+                        <span class="ms-1 small text-muted">{{ c.total_score }} 分</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">待评价</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if c.eval_id %}
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                data-bs-toggle="modal" data-bs-target="#viewEvalModal"
+                                data-course="{{ c.course_name }}"
+                                data-teacher="{{ c.teacher }}"
+                                data-score="{{ c.total_score }}"
+                                data-comment="{{ c.comment or '' }}">
+                            查看
+                        </button>
+                        {% else %}
+                        <a href="{{ url_for('evaluation_form', course_id=c.course_id) }}"
+                           class="btn btn-sm btn-primary">去评价</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">暂无课程数据，请先导入课程</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========== 查看评价弹窗（只读） ========== -->
+<div class="modal fade" id="viewEvalModal" tabindex="-1" aria-labelledby="viewEvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewEvalModalLabel">查看评价</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-sm table-bordered mb-0 align-middle">
+                    <tbody>
+                        <tr>
+                            <th class="table-light" style="width: 100px;">课程名称</th>
+                            <td id="viewCourse"></td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">授课教师</th>
+                            <td id="viewTeacher"></td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">总评分</th>
+                            <td><span id="viewScore" class="fs-5 fw-bold text-primary"></span> 分</td>
+                        </tr>
+                        <tr>
+                            <th class="table-light">评语</th>
+                            <td id="viewComment" style="white-space: pre-wrap;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var modalEl = document.getElementById('viewEvalModal');
+
+        modalEl.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+
+            var d = btn.dataset;
+            document.getElementById('viewCourse').textContent = d.course || '';
+            document.getElementById('viewTeacher').textContent = d.teacher || '';
+            document.getElementById('viewScore').textContent = d.score || '—';
+            document.getElementById('viewComment').textContent = (d.comment || '').trim() || '无';
+        });
+    })();
+</script>
+{% endblock %}
